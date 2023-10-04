@@ -15,11 +15,7 @@
     
     <h5>Sesi terakhir login: {{ last_login }}</h5>
 
-    <a href="{% url 'main:create_product' %}">
-        <button>
-            Add New Product
-        </button>
-    </a>
+    
 
     <a href="{% url 'main:logout' %}">
         <button>
@@ -65,41 +61,68 @@
         async function getProducts() {
             return fetch("{% url 'main:get_product_json' %}").then((res) => res.json())
         }
+
         async function refreshProducts() {
-        document.getElementById("product_table").innerHTML = ""
-        const products = await getProducts()
-        let htmlString = `<tr>
-            <th>Name</th>
-            <th>Price</th>
-            <th>Description</th>
-            <th>Date Added</th>
-        </tr>`
-        products.forEach((item) => {
-            htmlString += `\n<tr>
-            <td>${item.fields.name}</td>
-            <td>${item.fields.price}</td>
-            <td>${item.fields.description}</td>
-            <td>${item.fields.date_added}</td>
-            
-        </tr>` 
-        })
+            document.getElementById("product_table").innerHTML = "";
+            const products = await getProducts();
+            let htmlString = `<tr>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Description</th>
+                <th>Date Added</th>
+                <th>Actions</th>
+            </tr>`;
+            products.forEach((item) => {
+                htmlString += `\n<tr>
+                    <td>${item.fields.name}</td>
+                    <td>${item.fields.price}</td>
+                    <td>${item.fields.description}</td>
+                    <td>${item.fields.date_added}</td>
+                    <td>
+                        <a href='edit-product/${item.pk}'>
+                        <button class="btn btn-primary" onclick="editProduct(${item.pk})">Edit</button>
+                        </a>
+                        <button class="btn btn-danger" onclick="deleteProduct(${item.pk})">Delete</button>
+                    </td>
+                </tr>`;
+            });
+
+            document.getElementById("product_table").innerHTML = htmlString;
+            }
+
+        function addProduct() {
+            fetch("{% url 'main:add_product_ajax' %}", {
+                method: "POST",
+                body: new FormData(document.querySelector('#form'))
+            }).then(refreshProducts)
+
+            document.getElementById("form").reset()
+            return false
+
+        }
+
+        function editProduct(productId) {
+            fetch(`{% url 'main:edit_product' 0 %}${productId}/`, {
+                method: "POST",
+                body: new FormData(document.querySelector('#form'))
+            }).then(refreshProducts)
+
+            document.getElementById("form").reset()
+            return false
+        }
+
+        function deleteProduct(productId) {
+            fetch(`{% url 'main:delete_product' 0 %}`.replace("0", productId), {
+                method: "POST",
+                body: new FormData(document.querySelector('#form'))
+            }).then(refreshProducts)
+
+            document.getElementById("form").reset()
+            return false
+        }
         
-        document.getElementById("product_table").innerHTML = htmlString
-    }
-
-    function addProduct() {
-        fetch("{% url 'main:add_product_ajax' %}", {
-            method: "POST",
-            body: new FormData(document.querySelector('#form'))
-        }).then(refreshProducts)
-
-        document.getElementById("form").reset()
-        return false
-       
-
-    }
-    document.getElementById("button_add").onclick = addProduct
-    refreshProducts()
+        document.getElementById("button_add").onclick = addProduct
+        refreshProducts()
     </script>
 
     {% endblock content %}
